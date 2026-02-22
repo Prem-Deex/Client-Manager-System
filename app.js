@@ -109,11 +109,11 @@ function initClientForm() {
         clients[client.id] = client;
         saveClients(clients);
 
-        
+
         form.reset();
         totalAmountDisplay.textContent = '0.00';
 
-        
+
         currentClientId = client.id;
         showClientDetail(client.id);
     });
@@ -122,7 +122,7 @@ function initClientForm() {
 function loadClientsList() {
     const clients = getClients();
     const clientsList = document.getElementById('clients-list');
-    
+
     if (Object.keys(clients).length === 0) {
         clientsList.innerHTML = '<p style="color: #999; padding: 20px;">No clients yet. Create your first client above!</p>';
         return;
@@ -131,7 +131,7 @@ function loadClientsList() {
     clientsList.innerHTML = Object.values(clients).map(client => {
         const totalPaid = client.payments.reduce((sum, p) => sum + p.amount, 0);
         const remaining = client.totalAmount - totalPaid;
-        
+
         return `
             <div class="client-card" onclick="showClientDetail('${client.id}')">
                 <h4>${escapeHtml(client.name)}</h4>
@@ -146,7 +146,7 @@ function loadClientsList() {
 function showClientDetail(clientId) {
     currentClientId = clientId;
     const client = getClient(clientId);
-    
+
     if (!client) {
         alert('Client not found');
         return;
@@ -174,10 +174,10 @@ function showClientDetail(clientId) {
 
 function initClientPaymentForm() {
     const form = document.getElementById('client-payment-form');
-    
+
     form.addEventListener('submit', (e) => {
         e.preventDefault();
-        
+
         if (!currentClientId) return;
 
         const amount = parseFloat(document.getElementById('payment-amount').value);
@@ -198,10 +198,12 @@ function initClientPaymentForm() {
         };
 
         client.payments.push(payment);
-        
+
         const totalPaid = client.payments.reduce((sum, p) => sum + p.amount, 0);
         const remaining = client.totalAmount - totalPaid;
         client.history.push({
+            id: Date.now().toString(),
+            paymentId: payment.id, 
             date: payment.date,
             type: 'client_payment',
             amount: amount,
@@ -218,7 +220,7 @@ function initClientPaymentForm() {
         const now = new Date();
         document.getElementById('payment-date').value = now.toISOString().slice(0, 16);
 
-       
+
         loadClientPayments();
         updateCashFlow();
         updateHistory();
@@ -238,7 +240,7 @@ function loadClientPayments() {
     document.getElementById('remaining-due').textContent = remaining.toFixed(2);
 
     const tableBody = document.getElementById('client-payments-table');
-    
+
     if (client.payments.length === 0) {
         tableBody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #999;">No payments recorded yet</td></tr>';
         return;
@@ -259,18 +261,14 @@ function loadClientPayments() {
             `;
         }).join('');
 }
-
 function deleteClientPayment(paymentId) {
     if (!confirm('Are you sure you want to delete this payment?')) return;
 
     const client = getClient(currentClientId);
     if (!client) return;
-
     client.payments = client.payments.filter(p => p.id !== paymentId);
-    
-
-    client.history = client.history.filter(h => 
-        !(h.type === 'client_payment' && h.amount === client.payments.find(p => p.id === paymentId)?.amount)
+    client.history = client.history.filter(
+        h => h.paymentId !== paymentId
     );
 
     const clients = getClients();
@@ -279,14 +277,14 @@ function deleteClientPayment(paymentId) {
 
     loadClientPayments();
     updateCashFlow();
+    updateHistory();
 }
-
 function initWorkerForm() {
     const form = document.getElementById('worker-form');
-    
+
     form.addEventListener('submit', (e) => {
         e.preventDefault();
-        
+
         if (!currentClientId) return;
 
         const name = document.getElementById('worker-name').value.trim();
@@ -308,8 +306,8 @@ function initWorkerForm() {
         };
 
         client.workers.push(worker);
-        
-     
+
+
         client.history.push({
             date: new Date().toISOString(),
             type: 'worker_added',
@@ -320,7 +318,7 @@ function initWorkerForm() {
 
         const clients = getClients();
         clients[currentClientId] = client;
-        saveClients(clients);    
+        saveClients(clients);
         form.reset();
         loadWorkers();
     });
@@ -333,7 +331,7 @@ function loadWorkers() {
     if (!client) return;
 
     const workersList = document.getElementById('workers-list');
-    
+
     if (client.workers.length === 0) {
         workersList.innerHTML = '<p style="color: #999; padding: 20px;">No workers added yet. Add a worker above!</p>';
         updateCashFlow();
@@ -371,11 +369,11 @@ function loadWorkers() {
                             </tr>
                         </thead>
                         <tbody>
-                            ${worker.payments.length === 0 
-                                ? '<tr><td colspan="3" style="text-align: center; color: #999;">No payments recorded</td></tr>'
-                                : worker.payments
-                                    .sort((a, b) => new Date(b.date) - new Date(a.date))
-                                    .map(p => `
+                            ${worker.payments.length === 0
+                ? '<tr><td colspan="3" style="text-align: center; color: #999;">No payments recorded</td></tr>'
+                : worker.payments
+                    .sort((a, b) => new Date(b.date) - new Date(a.date))
+                    .map(p => `
                                         <tr>
                                             <td>${formatDateTime(new Date(p.date))}</td>
                                             <td>₹${p.amount.toFixed(2)}</td>
@@ -384,7 +382,7 @@ function loadWorkers() {
                                             </td>
                                         </tr>
                                     `).join('')
-                            }
+            }
                         </tbody>
                     </table>
                 </div>
@@ -404,7 +402,7 @@ function openWorkerPaymentModal(workerId) {
     if (!worker) return;
 
     document.getElementById('modal-worker-name').textContent = escapeHtml(worker.name);
-    
+
     const now = new Date();
     document.getElementById('worker-payment-date').value = now.toISOString().slice(0, 16);
 
@@ -431,10 +429,10 @@ function updateWorkerModalSummary(worker) {
 
 function initWorkerPaymentForm() {
     const form = document.getElementById('worker-payment-form');
-    
+
     form.addEventListener('submit', (e) => {
         e.preventDefault();
-        
+
         if (!currentClientId || !currentWorkerId) return;
 
         const amount = parseFloat(document.getElementById('worker-payment-amount').value);
@@ -458,11 +456,11 @@ function initWorkerPaymentForm() {
         };
 
         worker.payments.push(payment);
-        
+
         const totalPaid = worker.payments.reduce((sum, p) => sum + p.amount, 0);
         const due = Math.max(0, worker.totalPay - totalPaid);
         const advance = totalPaid > worker.totalPay ? totalPaid - worker.totalPay : 0;
-        
+
         client.history.push({
             date: payment.date,
             type: 'worker_payment',
@@ -482,7 +480,7 @@ function initWorkerPaymentForm() {
         const now = new Date();
         document.getElementById('worker-payment-date').value = now.toISOString().slice(0, 16);
 
-    
+
         loadWorkers();
         updateWorkerModalSummary(worker);
     });
@@ -491,7 +489,7 @@ function initWorkerPaymentForm() {
         document.getElementById('worker-payment-modal').classList.remove('active');
     });
 
-  
+
     document.getElementById('worker-payment-modal').addEventListener('click', (e) => {
         if (e.target.id === 'worker-payment-modal') {
             document.getElementById('worker-payment-modal').classList.remove('active');
@@ -554,7 +552,7 @@ function updateCashFlow() {
         return sum + worker.payments.reduce((wSum, p) => wSum + p.amount, 0);
     }, 0);
 
-    
+
     const moneyLeft = totalClientPayments - totalWorkerPayments;
 
     document.getElementById('total-client-payments').textContent = totalClientPayments.toFixed(2);
@@ -562,7 +560,7 @@ function updateCashFlow() {
     document.getElementById('money-left').textContent = moneyLeft.toFixed(2);
 
     if (client.payments.length > 0 || client.workers.some(w => w.payments.length > 0)) {
-        
+
         const lastCashFlowIndex = client.history.map((h, i) => h.type === 'cash_flow' ? i : -1).filter(i => i >= 0).pop();
         const cashFlowEntry = {
             date: new Date().toISOString(),
@@ -609,7 +607,7 @@ function displayHistory() {
     const selectedClientId = document.getElementById('history-client-select').value;
     const timeline = document.getElementById('history-timeline');
 
-  
+
     let allHistory = [];
 
     Object.values(clients).forEach(client => {
@@ -632,7 +630,7 @@ function displayHistory() {
         return;
     }
 
-    
+
     const groupedByDate = {};
     allHistory.forEach(entry => {
         const dateKey = new Date(entry.date).toLocaleDateString();
@@ -646,27 +644,27 @@ function displayHistory() {
         .sort((a, b) => new Date(a) - new Date(b))
         .map(date => {
             const entries = groupedByDate[date];
-            
+
             return `
                 <div class="history-entry">
                     <div class="history-date">${date}</div>
                     ${entries.map(entry => {
-                        let cashFlowInfo = '';
-                        if (entry.type === 'cash_flow') {
-                            cashFlowInfo = `
+                let cashFlowInfo = '';
+                if (entry.type === 'cash_flow') {
+                    cashFlowInfo = `
                                 <div class="history-item">
                                     <strong>Money Left:</strong> ₹${entry.moneyLeft.toFixed(2)}
                                 </div>
                             `;
-                        }
-                        
-                        return `
+                }
+
+                return `
                             <div class="history-item">
                                 <strong>${entry.clientName}:</strong> ${entry.message}
                                 ${cashFlowInfo}
                             </div>
                         `;
-                    }).join('')}
+            }).join('')}
                 </div>
             `;
         }).join('');
@@ -677,6 +675,7 @@ function updateHistory() {
         loadHistory();
     }
 }
+
 
 
 function formatDateTime(date) {
