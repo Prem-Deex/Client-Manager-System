@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Manager</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Client Manager</h1>
+            <nav class="nav-tabs">
+                <button class="nav-btn active" data-section="new">NEW</button>
+                <button class="nav-btn" data-section="history">HISTORY</button>
+            </nav>
+        </header>
+
+        <!-- NEW Section -->
+        <section id="new-section" class="section active">
+            <h2>Create New Client</h2>
+            <form id="client-form" class="client-form">
+                <div class="form-group">
+                    <label for="client-name">Client Name *</label>
+                    <input type="text" id="client-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="rate">Rate per Square Meter (₹) *</label>
+                    <input type="number" id="rate" step="0.01" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="area">Total Area (square meters) *</label>
+                    <input type="number" id="area" step="0.01" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label>Total Client Amount (₹)</label>
+                    <div class="calculated-value" id="total-amount">0.00</div>
+                </div>
+                <button type="submit" class="btn btn-primary">Create Client</button>
+            </form>
+
+            <div class="clients-list">
+                <h3>Existing Clients</h3>
+                <div id="clients-list" class="clients-grid"></div>
+            </div>
+        </section>
+
+        <!-- Client Detail Page -->
+        <section id="client-detail-section" class="section">
+            <div class="detail-header">
+                <button class="btn btn-secondary" id="back-btn">← Back to NEW</button>
+                <h2 id="client-detail-title">Client Details</h2>
+            </div>
+
+            <div class="client-info-card">
+                <h3>Client Information</h3>
+                <div class="info-grid">
+                    <div><strong>Name:</strong> <span id="detail-client-name"></span></div>
+                    <div><strong>Rate:</strong> ₹<span id="detail-rate"></span> per sqm</div>
+                    <div><strong>Area:</strong> <span id="detail-area"></span> sqm</div>
+                    <div><strong>Total Amount:</strong> ₹<span id="detail-total-amount"></span></div>
+                </div>
+            </div>
+
+            <!-- Client Payment Tracking -->
+            <div class="card">
+                <h3>A Client Payment Tracking</h3>
+                <form id="client-payment-form" class="payment-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="payment-amount">Payment Amount (₹) *</label>
+                            <input type="number" id="payment-amount" step="0.01" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="payment-date">Date & Time *</label>
+                            <input type="datetime-local" id="payment-date" required>
+                        </div>
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">Add Payment</button>
+                        </div>
+                    </div>
+                </form>
+                <div class="summary-box">
+                    <div class="summary-item">
+                        <strong>Total Paid:</strong> ₹<span id="total-paid">0.00</span>
+                    </div>
+                    <div class="summary-item">
+                        <strong>Remaining Due:</strong> ₹<span id="remaining-due">0.00</span>
+                    </div>
+                </div>
+                <div class="payments-table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date & Time</th>
+                                <th>Amount (₹)</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="client-payments-table"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Worker Management -->
+            <div class="card">
+                <h3>B- Worker Management</h3>
+                <form id="worker-form" class="worker-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="worker-name">Worker Name *</label>
+                            <input type="text" id="worker-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="worker-total-pay">Total Pay (₹) *</label>
+                            <input type="number" id="worker-total-pay" step="0.01" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">Add Worker</button>
+                        </div>
+                    </div>
+                </form>
+                <div id="workers-list"></div>
+            </div>
+
+            <!-- Cash Flow Tracking -->
+            <div class="card">
+                <h3>C- Cash Flow Tracking</h3>
+                <div class="cash-flow-summary">
+                    <div class="cash-flow-item">
+                        <strong>Money Received from Client:</strong>
+                        ₹<span id="total-client-payments">0.00</span>
+                    </div>
+                    <div class="cash-flow-item">
+                        <strong>Money Paid to Workers:</strong>
+                        ₹<span id="total-worker-payments">0.00</span>
+                    </div>
+                    <div class="cash-flow-item highlight">
+                        <strong>Money Left with You:</strong>
+                        ₹<span id="money-left">0.00</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- HISTORY Section -->
+        <section id="history-section" class="section">
+            <h2>Transaction History</h2>
+            <div class="history-filters">
+                <select id="history-client-select" class="select-input">
+                    <option value="">All Clients</option>
+                </select>
+            </div>
+            <div id="history-timeline" class="history-timeline"></div>
+        </section>
+
+    <!-- Worker Payment Modal -->
+    <div id="worker-payment-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>Add Payment for <span id="modal-worker-name"></span></h3>
+            <form id="worker-payment-form">
+                <div class="form-group">
+                    <label for="worker-payment-amount">Amount Paid (₹) *</label>
+                    <input type="number" id="worker-payment-amount" step="0.01" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="worker-payment-date">Date & Time </label>
+                    <input type="datetime-local" id="worker-payment-date" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Add Payment</button>
+            </form>
+            <div class="worker-summary" id="modal-worker-summary"></div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
